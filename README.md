@@ -38,3 +38,32 @@ python manage.py import_wordpress_images /path/to/your/wordpress-export.xml
 ## License
 
 MIT License
+
+## Development
+
+### Local development
+
+```bash
+# Clone the repository
+git clone git@github.com:tomdyson/wagtail-wordpress-image-importer.git
+cd wagtail-wordpress-image-importer
+
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or `.venv\Scripts\activate` on Windows
+
+# Install dependencies
+pip install -e .
+```
+
+### Releasing a new version
+
+1. Update the version number in `pyproject.toml`
+2. Commit your changes
+3. Create and push a new tag:
+   ```bash
+   git tag v0.1.1
+   git push origin v0.1.1
+   ```
+4. Create a new release on GitHub using this tag
+5. The GitHub Action will automatically build and publish to PyPI
