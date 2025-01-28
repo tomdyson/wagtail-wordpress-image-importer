@@ -32,8 +32,9 @@ python manage.py import_wordpress_images /path/to/your/wordpress-export.xml
 
 ### Options
 
-- `--delete-existing`: Delete all existing Wagtail images before importing
 - `--debug`: Show detailed debug information during import
+- `--collection`: Import images into specified collection
+- `--delete-existing`: Delete all existing Wagtail images before importing (for specified collection, if provided)
 
 ## License
 

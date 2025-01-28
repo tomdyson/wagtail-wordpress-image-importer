@@ -7,11 +7,13 @@ from io import BytesIO
 from urllib.parse import urlparse
 
 import requests
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from PIL import Image as PILImage
 from tqdm import tqdm
 from wagtail.images.models import Image
+from wagtail.models import Collection
 
 
 class Command(BaseCommand):
@@ -29,17 +31,39 @@ class Command(BaseCommand):
             action='store_true',
             help='Show detailed debug information for each image'
         )
+        parser.add_argument(
+            '--collection',
+            type=str,
+            help='Name of the collection to import images into'
+        )
 
     def handle(self, *args, **options):
         xml_file = options['xml_file']
         debug = options['debug']
+        collection_name = options.get('collection')
+        
+        # Handle collection
+        collection = None
+        if collection_name:
+            try:
+                collection = Collection.objects.get(name=collection_name)
+                self.stdout.write(f"Using existing collection: {collection_name}")
+            except ObjectDoesNotExist:
+                root_collection = Collection.get_first_root_node()
+                collection = root_collection.add_child(name=collection_name)
+                self.stdout.write(f"Created new collection: {collection_name}")
         
         # Delete existing images if flag is set
         if options['delete_existing']:
-            image_count = Image.objects.count()
-            Image.objects.all().delete()
-            self.stdout.write(f"Deleted {image_count} existing images")
-        
+            if collection:
+                image_count = Image.objects.filter(collection=collection).count()
+                Image.objects.filter(collection=collection).delete()
+                self.stdout.write(f"Deleted {image_count} existing images from collection '{collection_name}'")
+            else:
+                image_count = Image.objects.count()
+                Image.objects.all().delete()
+                self.stdout.write(f"Deleted {image_count} existing images")
+
         try:
             # Read the file with UTF-8 encoding and handle encoding errors
             with codecs.open(xml_file, 'r', encoding='utf-8', errors='replace') as file:
@@ -160,6 +184,10 @@ class Command(BaseCommand):
                             description=alt_text
                         )
                         
+                        # Set collection if specified
+                        if collection:
+                            image.collection = collection
+
                         # Save the file
                         image.file.save(filename, ContentFile(response.content), save=False)
                         
